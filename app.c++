@@ -22,13 +22,14 @@ int tidx = 0;
 int pidx = 0;
 
 int get_tagid(char name[]){
-    if(!taginfo[tag]){
-        taginfo.insert({tag, tidx++});
+    if(!taginfo[name]){
+        taginfo.insert({name, tidx++});
     }
-    return taginfo[tag];
+    return taginfo[name];
 }
 
-void init(){
+void init(int N){
+    taginfo.clear();
     tidx = 0;
     pidx = 0;
     for(register int i = 0; i<30000; i++){
@@ -38,7 +39,7 @@ void init(){
 
 
 void addProduct(int mPrice, int tagNum, char tagName[][10]){
-    Product* ptr = pList[pidx];
+    Product* ptr = &pList[pidx];
     ptr->pid = pidx;
     ptr->price = mPrice;
     ptr->active = true;
@@ -74,11 +75,11 @@ int buyProduct(char tag1[], char tag2[], char tag3[]){
     
     int hash = get_tagid(tag1) + get_tagid(tag2) * 30 + get_tagid(tag3) * 900;
     
-    ptr = tagList[hash];
+    Product* ptr = tagList[hash];
     
     int minPrice = 987654321;
     int pid = -1;
-    Product* tmpptr = nullptr
+    Product* tmpptr = nullptr;
     while(ptr){
         if(ptr->active){
             if(ptr->price < minPrice){
@@ -101,7 +102,7 @@ int buyProduct(char tag1[], char tag2[], char tag3[]){
 }
 
 void adjustPrice(char tag1[], int changePrice){
-    int hash = get_tagid(tag1)
+    int hash = get_tagid(tag1);
     Product* ptr = tagList[hash];
     
     while(ptr){
