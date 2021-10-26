@@ -54,14 +54,16 @@ void addProduct(int mPrice, int tagNum, char tagName[][10]){
     int hash = 0;
 
     for(register int i = 0; i < tagNum ; i++){
-        tagList[tags[0]] = &pList[pidx];
+        ptr->next = tagList[tags[0]];
+        tagList[tags[0]] = ptr;
         for(register int j = i + 1; j < tagNum; j++){
             for(register int k = j + 1; k < tagNum; k++){
                 hash = tags[i] + tags[j] * 30 + tags[k] * 900;
+                tagList[hash] = &pList[pidx];
             }
         }
         ptr->next = tagList[hash];
-        tagList[hash] = &pList[pidx];
+        tagList[hash] = ptr;
         
     }
 }
