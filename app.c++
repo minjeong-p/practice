@@ -7,64 +7,91 @@
 using namespace std;
 
 struct Product{
-    int pid;
     int price;
-    bool active;
-    Product* next;
-    
+    int active;
 }pList[30000];
-
-Product* tagList[27000];
-
-unordered_map<char*, int> taginfo;
-
-int tidx = 0;
 int pidx = 0;
 
-int get_tagid(char name[]){
-    if(!taginfo[name]){
-        taginfo.insert({name, tidx++});
-    }
-    return taginfo[name];
-}
+
+struct Node{
+    Product* prod;
+    Node* next;
+}nList[500000];
+int nidx = 0;
+
+
+Node hashList[27000];
+
+
+unordered_map<string, int> taginfo;
+int tidx = 0;
+
 
 void init(int N){
     taginfo.clear();
     tidx = 0;
     pidx = 0;
-    for(register int i = 0; i<30000; i++){
-        pList[i].next = nullptr;
+    nidx = 0;
+    for(register int i = 0; i<500000; i++){
+        nList[i].next = nullptr;
+    }
+    //TLE- 이부분 추가됨
+    for (int i = 0; i < 27000; i++) {
+        hashList[i].next = 0;
     }
 }
 
+/*
+int get_tagid(char name[]){
+    if(!taginfo[name]){
+        taginfo.insert({name, tidx++});
+    }
+    return taginfo[name];
+}이렇게 하면 TLE 발생*/ 
+
+int get_tagid(char name[]){
+    auto tag = taginfo.find(name);
+    if (tag == taginfo.end()) {
+        int tid = tidx++;
+        taginfo[name] = tid;
+        return tid;
+    }
+    return tag->second;
+}
+
+void addNode(int id, Product* prod){
+    Node* ptr = &nList[nidx++];
+    
+    ptr->prod = prod;
+    ptr->next = hashList[id].next;
+    hashList[id].next = ptr;
+    
+}
+
+
+
 
 void addProduct(int mPrice, int tagNum, char tagName[][10]){
-    Product* ptr = &pList[pidx];
-    ptr->pid = pidx;
-    ptr->price = mPrice;
-    ptr->active = true;
-    pidx++;
-    
     vector<int> tags(tagNum);
     for(register int i = 0; i < tagNum; i++){
         tags[i] = get_tagid(tagName[i]);
     }
     sort(tags.begin(), tags.end());
     
+    Product* ptr = &pList[pidx++];
+    ptr->price = mPrice;
+    ptr->active = 1;
+    
     int hash = 0;
 
     for(register int i = 0; i < tagNum ; i++){
-        ptr->next = tagList[tags[0]];
-        tagList[tags[0]] = ptr;
+        addNode(tags[i], ptr);
         for(register int j = i + 1; j < tagNum; j++){
             for(register int k = j + 1; k < tagNum; k++){
                 hash = tags[i] + tags[j] * 30 + tags[k] * 900;
-                tagList[hash] = &pList[pidx];
+                addNode(hash, ptr);
             }
         }
-        ptr->next = tagList[hash];
-        tagList[hash] = ptr;
-        
     }
 }
 
@@ -75,26 +102,26 @@ int buyProduct(char tag1[], char tag2[], char tag3[]){
     tmp.push_back(get_tagid(tag3));
     sort(tmp.begin(), tmp.end());
     
-    int hash = get_tagid(tag1) + get_tagid(tag2) * 30 + get_tagid(tag3) * 900;
+    int hash = tmp[0] + tmp[1] * 30 + tmp[2] * 900; //여기서 get_tagid로 했을 때는 fail이었고 바꾸니까 해결됨.
     
-    Product* ptr = tagList[hash];
+    Node* ptr = hashList[hash].next;
     
     int minPrice = 987654321;
-    int pid = -1;
-    Product* tmpptr = nullptr;
+    Node* tmpptr;
+    
     while(ptr){
-        if(ptr->active){
-            if(ptr->price < minPrice){
-            minPrice = ptr->price;
-            pid = ptr->pid;
-            tmpptr = ptr;
+        Product *prod = ptr->prod;
+        if(prod->active == 1){
+            if(prod->price < minPrice){
+                minPrice = prod->price;
+                tmpptr = ptr;
             }
         }
         ptr = ptr->next;
     }
     
     if(minPrice != 987654321){
-        tmpptr->active = false;
+        tmpptr->prod->active = 0;
     }
     else{
         return -1;
@@ -105,10 +132,10 @@ int buyProduct(char tag1[], char tag2[], char tag3[]){
 
 void adjustPrice(char tag1[], int changePrice){
     int hash = get_tagid(tag1);
-    Product* ptr = tagList[hash];
+    Node* ptr = hashList[hash].next;
     
     while(ptr){
-        ptr->price += changePrice;
+        ptr->prod->price += changePrice;
         ptr = ptr->next;
     }
 }
